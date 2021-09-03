@@ -13,10 +13,7 @@ namespace BetterChat
         [PunRPC]
         public void RPCA_CreateMessage(string playerName, int teamID, string message)
         {
-            var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentTrans);
-            var color = GetPlayerColor(teamID);
-            messObj.GetComponent<TextMeshProUGUI>().text = "<color=" + color + ">" + playerName + "</color>"+ ": " + message;
-            messObj.AddComponent<MessageMono>();
+            CreateLocalMessage(playerName,teamID,message);
             if (ChatMonoGameManager.firstTime)
             {
                 BetterChat.instance.ShowChat();
@@ -27,6 +24,18 @@ namespace BetterChat
 
                 firstTime = false;
             }
+        }
+
+        public void CreateLocalMessage(string playerName, int teamID, string message)
+        {
+            var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentTrans);
+            var color = GetPlayerColor(teamID);
+            var UGUI = messObj.GetComponent<TextMeshProUGUI>();
+            UGUI.text = "<color=" + color + ">" + playerName + "</color>"+ ": " + message;
+            UGUI.alignment = BetterChat.textOnRightSide.Value
+                ? TextAlignmentOptions.MidlineRight
+                : TextAlignmentOptions.MidlineLeft;
+            messObj.AddComponent<MessageMono>();
         }
 
         [PunRPC]

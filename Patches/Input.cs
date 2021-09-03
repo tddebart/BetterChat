@@ -10,7 +10,7 @@ namespace BetterChat.Patches
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(Input __instance, KeyCode key)
         {
-            if (BetterChat.isLockingInput && key != KeyCode.Return)
+            if (BetterChat.isLockingInput && key != KeyCode.Return && key != KeyCode.UpArrow && key != KeyCode.DownArrow)
             {
                 return false;
             }

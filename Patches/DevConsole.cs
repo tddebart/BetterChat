@@ -21,8 +21,25 @@ namespace BetterChat.Patches
                 BetterChat.inputField.Select();
                 BetterChat.inputField.ActivateInputField();
                 BetterChat.inputField.OnSelect(new BaseEventData(EventSystem.current));
+                if (!BetterChat.clearMessageOnEnter.Value)
+                {
+                    BetterChat.inputField.selectionAnchorPosition = 0;
+                    BetterChat.inputField.selectionFocusPosition = BetterChat.inputField.text.Length;
+                }
             }
 
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(DevConsole), "RPCA_SendChat")]
+    class Patch_rpca_dev
+    {
+        private static bool Prefix(string message, int playerViewID)
+        {
+            var player = PhotonNetwork.GetPhotonView(playerViewID);
+            if (player.IsMine) return false;
+            MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, "Unmodded user", player.GetComponent<Player>().teamID, message);
             return false;
         }
     }

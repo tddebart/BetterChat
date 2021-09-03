@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Utils;
 using Photon.Pun;
 using TMPro;
 using UnboundLib;
 using UnboundLib.Utils;
+using UnboundLib.Utils.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -34,6 +36,8 @@ namespace BetterChat
         public static Transform chatContentTrans;
 
         public static Image contentPanel;
+
+        public RectTransform mainPanel;
         
         public static TMP_InputField inputField;
 
@@ -48,14 +52,48 @@ namespace BetterChat
 
         public static BetterChat instance;
 
+        public static ConfigEntry<int> width;
+        public static ConfigEntry<int> height;
+
+        public static ConfigEntry<int> xLoc;
+        public static ConfigEntry<int> yLoc;
+
+        public static ConfigEntry<bool> textOnRightSide;
+
+        public static ConfigEntry<float> timeBeforeTextGone;
+        public static ConfigEntry<bool> clearMessageOnEnter;
+
+        public static List<string> pastMessages = new List<string>();
+        public static int currentPastIndex;
+
         private void Start()
         {
             instance = this;
             
             var harmony = new Harmony(ModId);
             harmony.PatchAll();
+            
+            Unbound.RegisterClientSideMod(ModId);
 
+            width = Config.Bind("BetterChat", "Width", 550);
+            height = Config.Bind("BetterChat", "Height", 400);
+            xLoc = Config.Bind("BetterChat", "x location", 25);
+            yLoc = Config.Bind("BetterChat", "y location", 25);
+            textOnRightSide = Config.Bind("BetterChat", "Text On Right Side", true);
+            timeBeforeTextGone = Config.Bind("BetterChat", "Time Before Text Gone", 6.5f);
+            clearMessageOnEnter = Config.Bind("BetterChat", "Clear Message On Enter", true);
+            
             timeSinceTyped = 10;
+            
+            Unbound.RegisterMenu("Better chat", () =>
+            {
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player1", 0, "Lorem ipsum dolor sit amet,");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player2", 1, "consectetur adipiscing elit,");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player3", 2, "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player4", 3, "Ut enim ad minim veniam");
+                ShowChat();
+                inputField.enabled = false;
+            }, MenuBuilder, null, true);
             
             chatAsset = AssetUtils.LoadAssetBundleFromResources("chatbundle", typeof(BetterChat).Assembly);
             if (chatAsset == null)
@@ -71,6 +109,8 @@ namespace BetterChat
 
             chatMessageObj = chatAsset.LoadAsset<GameObject>("ChatMessage");
             typingIndicatorObj = chatAsset.LoadAsset<GameObject>("Typing indicator");
+
+            mainPanel = chatCanvas.transform.Find("Panel").gameObject.GetComponent<RectTransform>();
 
             contentPanel = chatContentTrans.GetComponent<Image>();
 
@@ -117,10 +157,15 @@ namespace BetterChat
                         
                         // Create the message
                         MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, localNickName, teamID, text);
+                        currentPastIndex = 0;
+                        pastMessages.Insert(0, text);
                     }
                     
                     // Reset things
-                    inputField.text = string.Empty;
+                    if (clearMessageOnEnter.Value)
+                    {
+                        inputField.text = string.Empty;
+                    }
                     chatCanvas.GetComponentInChildren<Scrollbar>(true).value = 0;
                     timeSinceTyped = 10;
                 });
@@ -141,6 +186,94 @@ namespace BetterChat
                 timeSinceTyped = 0;
             });
             HideChat();
+        }
+
+        public void MenuBuilder( GameObject menu)
+        {
+            MenuHandler.CreateText("If you want to open the vanilla chat windows press shift + enter", menu, out _, 40);
+
+            MenuHandler.CreateText(" ", menu, out _);
+
+            MenuHandler.CreateSlider("Width", menu, 50, 150, 1000, width.Value, value =>
+            {
+                width.Value = (int)value;
+            }, out var widthSlider, true);
+            MenuHandler.CreateSlider("Height", menu, 50, 150, 1000, height.Value, value =>
+            {
+                height.Value = (int)value;
+            }, out var heightSlider, true);
+            
+            MenuHandler.CreateSlider("X location", menu, 50, 0, 1750, xLoc.Value, value =>
+            {
+                xLoc.Value = (int)value;
+            }, out var xSlider, true);
+            MenuHandler.CreateSlider("Y location", menu, 50, 0, 950, yLoc.Value, value =>
+            {
+                yLoc.Value = (int)value;
+            }, out var ySlider, true);
+
+            var toggle = MenuHandler.CreateToggle(textOnRightSide.Value, "Text on right side", menu, value =>
+            {
+                textOnRightSide.Value = value;
+                foreach (var chat in chatContentTrans.GetComponentsInChildren<MessageMono>())
+                {
+                    chat.GetComponent<TextMeshProUGUI>().alignment = textOnRightSide.Value
+                        ? TextAlignmentOptions.MidlineRight
+                        : TextAlignmentOptions.MidlineLeft;
+                }
+            }, 50);
+            
+            MenuHandler.CreateSlider("Seconds before message disappears", menu, 50, 1, 15, timeBeforeTextGone.Value, value =>
+            {
+                timeBeforeTextGone.Value = value;
+            }, out var secondsSlider);
+            
+            var toggle2 = MenuHandler.CreateToggle(clearMessageOnEnter.Value, "Clear message on enter", menu, value =>
+            {
+                clearMessageOnEnter.Value = value;
+            }, 50);
+            
+            
+            MenuHandler.CreateButton("Reset all", menu, () =>
+            {
+                width.Value = 550;
+                height.Value = 400;
+                xLoc.Value = 25;
+                yLoc.Value = 25;
+                textOnRightSide.Value = true;
+                timeBeforeTextGone.Value = 6.5f;
+                clearMessageOnEnter.Value = true;
+
+                widthSlider.value = width.Value;
+                heightSlider.value = height.Value;
+                xSlider.value = xLoc.Value;
+                ySlider.value = yLoc.Value;
+                toggle.GetComponent<Toggle>().isOn = textOnRightSide.Value;
+                secondsSlider.value = timeBeforeTextGone.Value;
+                toggle2.GetComponent<Toggle>().isOn = clearMessageOnEnter.Value;
+            }, 40);
+            
+            // Create back actions
+            menu.GetComponentInChildren<GoBack>(true).goBackEvent.AddListener(() =>
+            {
+               HideChat();
+               var childcount = chatContentTrans.childCount;
+               Destroy(chatContentTrans.GetChild(childcount - 1).gameObject);
+               Destroy(chatContentTrans.GetChild(childcount - 2).gameObject);
+               Destroy(chatContentTrans.GetChild(childcount - 3).gameObject);
+               Destroy(chatContentTrans.GetChild(childcount - 4).gameObject);
+               inputField.enabled = true;
+            });
+            menu.transform.Find("Group/Back").gameObject.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                HideChat();
+                var childcount = chatContentTrans.childCount;
+                Destroy(chatContentTrans.GetChild(childcount - 1).gameObject);
+                Destroy(chatContentTrans.GetChild(childcount - 2).gameObject);
+                Destroy(chatContentTrans.GetChild(childcount - 3).gameObject);
+                Destroy(chatContentTrans.GetChild(childcount - 4).gameObject);
+                inputField.enabled = true;
+            });
         }
 
         public void HideChat()
@@ -164,14 +297,28 @@ namespace BetterChat
         {
             foreach (var chat in chatContentTrans.GetComponentsInChildren<MessageMono>())
             {
-                messageObjs.Remove(chat.gameObject);
+                //messageObjs.Remove(chat.gameObject);
                 Destroy(chat.gameObject);
             }
+
+            pastMessages.Clear();
+            currentPastIndex = 0;
         }
 
         void Update()
         {
             Unbound.lockInputBools["chatLock"] = isLockingInput;
+            if (isLockingInput && Input.GetKeyDown(KeyCode.UpArrow) && currentPastIndex != pastMessages.Count-1)
+            {
+                currentPastIndex++;
+                inputField.text = pastMessages[currentPastIndex];
+            }
+            if (isLockingInput && Input.GetKeyDown(KeyCode.DownArrow) && currentPastIndex != 0)
+            {
+                currentPastIndex--;
+                inputField.text = pastMessages[currentPastIndex];
+            }
+            
             if (messageObjs.Count > 0 && chatHidden)
             {
                 contentPanel.enabled = true;
@@ -189,12 +336,22 @@ namespace BetterChat
             {
                 isTyping = false;
             }
+
+            if (mainPanel.sizeDelta.x != width.Value || mainPanel.sizeDelta.y != height.Value)
+            {
+                mainPanel.sizeDelta = new Vector2(width.Value, height.Value);
+            }
+            
+            if (mainPanel.anchoredPosition.x != xLoc.Value || mainPanel.anchoredPosition.y != yLoc.Value)
+            {
+                mainPanel.anchoredPosition = new Vector2(-xLoc.Value, yLoc.Value);
+            }
+            
             
             if (isTyping && !indicatorOn)
             {
                 if (PlayerManager.instance.players.Count != 0)
                 {
-                    UnityEngine.Debug.LogWarning("ActivateIndicator");
                     var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
                     if (localPlayer == null) return;
                     var localViewID = localPlayer.data.view.ViewID;
@@ -206,7 +363,6 @@ namespace BetterChat
             {
                 if (PlayerManager.instance.players.Count != 0)
                 {
-                    UnityEngine.Debug.LogWarning("DeActivateIndicator");
                     var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
                     var localViewID = localPlayer.data.view.ViewID;
                     MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_DeActivateIndicator", RpcTarget.All, localViewID);

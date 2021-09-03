@@ -23,7 +23,7 @@ namespace BetterChat
 
         private void Update()
         {
-            if (timeSinceAwake > 6.5)
+            if (timeSinceAwake > BetterChat.timeBeforeTextGone.Value)
             {
                 hideWhenChatHidden = true;
                 BetterChat.messageObjs.Remove(gameObject);
@@ -39,6 +39,11 @@ namespace BetterChat
                 layout.ignoreLayout = false;
                 uGUI.enabled = true;
             }
+        }
+
+        void OnDestroy()
+        {
+            BetterChat.messageObjs.Remove(gameObject);
         }
     }
 }
