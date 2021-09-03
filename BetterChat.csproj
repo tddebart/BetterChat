@@ -48,6 +48,9 @@
         <Reference Include="BepInEx, Version=5.4.11.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\core\BepInEx.dll</HintPath>
         </Reference>
+        <Reference Include="MMHOOK_Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\plugins\willis81808-MMHook\MMHOOK_Assembly-CSharp.dll</HintPath>
+        </Reference>
         <Reference Include="PhotonRealtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\PhotonRealtime.dll</HintPath>
         </Reference>
@@ -91,9 +94,10 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="BetterChat.cs" />
-        <Compile Include="ChatMonoPlayer.cs" />
+        <Compile Include="ChatMonoGameManager.cs" />
         <Compile Include="MessageMono.cs" />
         <Compile Include="Patches\DevConsole.cs" />
+        <Compile Include="Patches\MenuControllerHandler.cs" />
         <Compile Include="Patches\Input.cs" />
         <Compile Include="Patches\Player.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />

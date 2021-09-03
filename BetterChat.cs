@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
@@ -42,11 +43,15 @@ namespace BetterChat
 
         public static bool isLockingInput;
         public static bool chatHidden;
-        public static bool isTyping;
-        public static bool indicatorOn;
+        public bool isTyping;
+        public bool indicatorOn;
+
+        public static BetterChat instance;
 
         private void Start()
         {
+            instance = this;
+            
             var harmony = new Harmony(ModId);
             harmony.PatchAll();
 
@@ -69,6 +74,17 @@ namespace BetterChat
 
             contentPanel = chatContentTrans.GetComponent<Image>();
 
+            On.MainMenuHandler.Awake += (orig, self) =>
+            {
+                this.ExecuteAfterSeconds(0.2f, () =>
+                {
+                    HideChat();
+                    ResetChat();
+                });
+                
+                orig(self);
+            };
+
             inputField = chatCanvas.transform.Find("Panel/Input").GetComponent<TMP_InputField>();
             inputField.onEndEdit.AddListener(text =>
             {
@@ -76,16 +92,37 @@ namespace BetterChat
                 if (!Input.GetKeyDown(KeyCode.Return)) return;
                 this.ExecuteAfterSeconds(0.05f, () =>
                 {
-                    timeSinceTyped = 10;
+                    // Deselect the inputfield
                     inputField.DeactivateInputField(true);
                     inputField.ReleaseSelection();
                     inputField.OnDeselect(new BaseEventData(EventSystem.current));
+                    
+                    // don't send text if it isn't anything
                     if (string.IsNullOrWhiteSpace(text)) return;
-                    typeof(DevConsole).InvokeMember("Send", BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.NonPublic, null, MenuControllerHandler.instance.GetComponent<DevConsole>(), new object[]{text});
-                    var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
-                    localPlayer.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, "Player" + (localPlayer.playerID+1f), text);
+
+                    if (PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.Players.Count != 0)
+                    {
+                        Player localPlayer = null;
+                        // Send text to vanilla system so people without the mod can still see
+                        if (PlayerManager.instance.players.Count != 0)
+                        {
+                            typeof(DevConsole).InvokeMember("Send", BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.NonPublic, null, MenuControllerHandler.instance.GetComponent<DevConsole>(), new object[]{text});
+                            localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
+                        }
+
+                        var teamID = localPlayer != null ? localPlayer.teamID : -1;
+
+                        var localNickName = PhotonNetwork.LocalPlayer.NickName;
+                        if (String.IsNullOrWhiteSpace(localNickName)) localNickName = "Player1";
+                        
+                        // Create the message
+                        MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, localNickName, teamID, text);
+                    }
+                    
+                    // Reset things
                     inputField.text = string.Empty;
                     chatCanvas.GetComponentInChildren<Scrollbar>(true).value = 0;
+                    timeSinceTyped = 10;
                 });
             });
             inputField.onSelect.AddListener(text =>
@@ -99,28 +136,37 @@ namespace BetterChat
                 HideChat();
                 timeSinceTyped = 10;
             });
-            inputField.onValueChanged.AddListener(arg0 =>
+            inputField.onValueChanged.AddListener(text =>
             {
                 timeSinceTyped = 0;
             });
             HideChat();
         }
 
-        void HideChat()
+        public void HideChat()
         {
-            chatCanvas.GetComponentInChildren<Image>().enabled = false;
-            chatCanvas.GetComponentInChildren<ScrollRect>().enabled = false;
+            chatCanvas.GetComponentInChildren<Image>(true).enabled = false;
+            chatCanvas.GetComponentInChildren<ScrollRect>(true).enabled = false;
             chatCanvas.transform.Find("Panel/Chats/Scrollbar Vertical").gameObject.SetActive(false);
-            chatCanvas.GetComponentInChildren<TMP_InputField>().gameObject.SetActive(false);
+            chatCanvas.GetComponentInChildren<TMP_InputField>(true).gameObject.SetActive(false);
             chatHidden = true;
         }
-        void ShowChat()
+        public void ShowChat()
         {
             chatCanvas.GetComponentInChildren<Image>(true).enabled = true;
             chatCanvas.GetComponentInChildren<ScrollRect>(true).enabled = true;
             chatCanvas.transform.Find("Panel/Chats/Scrollbar Vertical").gameObject.SetActive(true);
             chatCanvas.GetComponentInChildren<TMP_InputField>(true).gameObject.SetActive(true);
             chatHidden = false;
+        }
+
+        public void ResetChat()
+        {
+            foreach (var chat in chatContentTrans.GetComponentsInChildren<MessageMono>())
+            {
+                messageObjs.Remove(chat.gameObject);
+                Destroy(chat.gameObject);
+            }
         }
 
         void Update()
@@ -143,20 +189,29 @@ namespace BetterChat
             {
                 isTyping = false;
             }
-
+            
             if (isTyping && !indicatorOn)
             {
-                UnityEngine.Debug.LogWarning("ActivateIndicator");
-                var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
-                var localViewID = localPlayer.data.view.ViewID;
-                localPlayer.data.view.RPC("RPCA_ActivateIndicator", RpcTarget.All, localViewID);
+                if (PlayerManager.instance.players.Count != 0)
+                {
+                    UnityEngine.Debug.LogWarning("ActivateIndicator");
+                    var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
+                    if (localPlayer == null) return;
+                    var localViewID = localPlayer.data.view.ViewID;
+                    MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_ActivateIndicator", RpcTarget.All, localViewID);
+                    indicatorOn = true;
+                }
             }
             else if (!isTyping && indicatorOn)
             {
-                UnityEngine.Debug.LogWarning("DeActivateIndicator");
-                var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
-                var localViewID = localPlayer.data.view.ViewID;
-                localPlayer.data.view.RPC("RPCA_DeActivateIndicator", RpcTarget.All, localViewID);
+                if (PlayerManager.instance.players.Count != 0)
+                {
+                    UnityEngine.Debug.LogWarning("DeActivateIndicator");
+                    var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
+                    var localViewID = localPlayer.data.view.ViewID;
+                    MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_DeActivateIndicator", RpcTarget.All, localViewID);
+                    indicatorOn = false;
+                }
             }
         }
     }

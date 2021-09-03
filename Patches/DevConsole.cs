@@ -1,4 +1,6 @@
 ﻿using HarmonyLib;
+using Photon.Pun;
+using UnboundLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -14,7 +16,7 @@ namespace BetterChat.Patches
             {
                 return true;
             }
-            if (Input.GetKeyDown(KeyCode.Return))
+            if (Input.GetKeyDown(KeyCode.Return) && PhotonNetwork.IsConnected)
             {
                 BetterChat.inputField.Select();
                 BetterChat.inputField.ActivateInputField();
