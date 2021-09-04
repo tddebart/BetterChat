@@ -36,6 +36,7 @@ namespace BetterChat
         public static Transform chatContentTrans;
 
         public static Image contentPanel;
+        public static Image mainPanelImg;
 
         public RectTransform mainPanel;
         
@@ -63,7 +64,9 @@ namespace BetterChat
         public static ConfigEntry<float> timeBeforeTextGone;
         public static ConfigEntry<bool> clearMessageOnEnter;
 
-        public static List<string> pastMessages = new List<string>();
+        public static ConfigEntry<float> backgroundOpacity; 
+
+        public static readonly List<string> pastMessages = new List<string>();
         public static int currentPastIndex;
 
         private void Start()
@@ -82,15 +85,16 @@ namespace BetterChat
             textOnRightSide = Config.Bind("BetterChat", "Text On Right Side", true);
             timeBeforeTextGone = Config.Bind("BetterChat", "Time Before Text Gone", 6.5f);
             clearMessageOnEnter = Config.Bind("BetterChat", "Clear Message On Enter", true);
+            backgroundOpacity = Config.Bind("BetterChat", "Background opacity", 70f);
             
             timeSinceTyped = 10;
             
             Unbound.RegisterMenu("Better chat", () =>
             {
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player1", 0, "Lorem ipsum dolor sit amet,");
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player2", 1, "consectetur adipiscing elit,");
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player3", 2, "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player4", 3, "Ut enim ad minim veniam");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player1", 0, "Lorem ipsum dolor sit amet,", "Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player2", 1, "consectetur adipiscing elit,", "Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player3", 2, "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", "Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("Player4", 3, "Ut enim ad minim veniam", "Remove");
                 ShowChat();
                 inputField.enabled = false;
             }, MenuBuilder, null, true);
@@ -111,6 +115,7 @@ namespace BetterChat
             typingIndicatorObj = chatAsset.LoadAsset<GameObject>("Typing indicator");
 
             mainPanel = chatCanvas.transform.Find("Panel").gameObject.GetComponent<RectTransform>();
+            mainPanelImg = mainPanel.GetComponent<Image>();
 
             contentPanel = chatContentTrans.GetComponent<Image>();
 
@@ -133,8 +138,8 @@ namespace BetterChat
                 this.ExecuteAfterSeconds(0.05f, () =>
                 {
                     // Deselect the inputfield
-                    inputField.DeactivateInputField(true);
-                    inputField.ReleaseSelection();
+                    //inputField.DeactivateInputField();
+                    //inputField.ReleaseSelection();
                     inputField.OnDeselect(new BaseEventData(EventSystem.current));
                     
                     // don't send text if it isn't anything
@@ -165,6 +170,11 @@ namespace BetterChat
                     if (clearMessageOnEnter.Value)
                     {
                         inputField.text = string.Empty;
+                        inputField.selectionAnchorPosition = 0;
+                    }
+                    else
+                    {
+                        inputField.text = text;
                     }
                     chatCanvas.GetComponentInChildren<Scrollbar>(true).value = 0;
                     timeSinceTyped = 10;
@@ -233,6 +243,11 @@ namespace BetterChat
                 clearMessageOnEnter.Value = value;
             }, 50);
             
+            MenuHandler.CreateSlider("Background opacity", menu, 50, 0, 100, backgroundOpacity.Value, value =>
+            {
+                backgroundOpacity.Value = value;
+            }, out var opacitySlider, true);
+            
             
             MenuHandler.CreateButton("Reset all", menu, () =>
             {
@@ -243,6 +258,7 @@ namespace BetterChat
                 textOnRightSide.Value = true;
                 timeBeforeTextGone.Value = 6.5f;
                 clearMessageOnEnter.Value = true;
+                backgroundOpacity.Value = 70f;
 
                 widthSlider.value = width.Value;
                 heightSlider.value = height.Value;
@@ -251,27 +267,32 @@ namespace BetterChat
                 toggle.GetComponent<Toggle>().isOn = textOnRightSide.Value;
                 secondsSlider.value = timeBeforeTextGone.Value;
                 toggle2.GetComponent<Toggle>().isOn = clearMessageOnEnter.Value;
+                opacitySlider.value = backgroundOpacity.Value;
             }, 40);
             
             // Create back actions
             menu.GetComponentInChildren<GoBack>(true).goBackEvent.AddListener(() =>
             {
                HideChat();
-               var childcount = chatContentTrans.childCount;
-               Destroy(chatContentTrans.GetChild(childcount - 1).gameObject);
-               Destroy(chatContentTrans.GetChild(childcount - 2).gameObject);
-               Destroy(chatContentTrans.GetChild(childcount - 3).gameObject);
-               Destroy(chatContentTrans.GetChild(childcount - 4).gameObject);
+               foreach (Transform obj in chatContentTrans)
+               {
+                   if (obj.name == "Remove")
+                   {
+                       Destroy(obj.gameObject);
+                   }
+               }
                inputField.enabled = true;
             });
             menu.transform.Find("Group/Back").gameObject.GetComponent<Button>().onClick.AddListener(() =>
             {
                 HideChat();
-                var childcount = chatContentTrans.childCount;
-                Destroy(chatContentTrans.GetChild(childcount - 1).gameObject);
-                Destroy(chatContentTrans.GetChild(childcount - 2).gameObject);
-                Destroy(chatContentTrans.GetChild(childcount - 3).gameObject);
-                Destroy(chatContentTrans.GetChild(childcount - 4).gameObject);
+                foreach (Transform obj in chatContentTrans)
+                {
+                    if (obj.name == "Remove")
+                    {
+                        Destroy(obj.gameObject);
+                    }
+                }
                 inputField.enabled = true;
             });
         }
@@ -308,6 +329,8 @@ namespace BetterChat
         void Update()
         {
             Unbound.lockInputBools["chatLock"] = isLockingInput;
+            
+            // Arrow message history
             if (isLockingInput && Input.GetKeyDown(KeyCode.UpArrow) && currentPastIndex != pastMessages.Count-1)
             {
                 currentPastIndex++;
@@ -319,6 +342,7 @@ namespace BetterChat
                 inputField.text = pastMessages[currentPastIndex];
             }
             
+            // Enable and disable background for singular messages
             if (messageObjs.Count > 0 && chatHidden)
             {
                 contentPanel.enabled = true;
@@ -328,6 +352,7 @@ namespace BetterChat
                 contentPanel.enabled = false;
             }
 
+            // Active typing indicator
             if (timeSinceTyped < 6)
             {
                 isTyping = true;
@@ -337,11 +362,21 @@ namespace BetterChat
                 isTyping = false;
             }
 
+            // Update opacity
+            if (mainPanelImg.color.a != backgroundOpacity.Value / 100f ||
+                contentPanel.color.a != backgroundOpacity.Value / 100f)
+            {
+                mainPanelImg.SetAlpha(backgroundOpacity.Value / 100f);
+                contentPanel.SetAlpha(backgroundOpacity.Value / 100f);
+            }
+
+            // Update width and height
             if (mainPanel.sizeDelta.x != width.Value || mainPanel.sizeDelta.y != height.Value)
             {
                 mainPanel.sizeDelta = new Vector2(width.Value, height.Value);
             }
             
+            // Update x and y position
             if (mainPanel.anchoredPosition.x != xLoc.Value || mainPanel.anchoredPosition.y != yLoc.Value)
             {
                 mainPanel.anchoredPosition = new Vector2(-xLoc.Value, yLoc.Value);

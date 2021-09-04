@@ -26,9 +26,10 @@ namespace BetterChat
             }
         }
 
-        public void CreateLocalMessage(string playerName, int teamID, string message)
+        public void CreateLocalMessage(string playerName, int teamID, string message, string objName = "")
         {
             var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentTrans);
+            if (objName != "") messObj.name = objName;
             var color = GetPlayerColor(teamID);
             var UGUI = messObj.GetComponent<TextMeshProUGUI>();
             UGUI.text = "<color=" + color + ">" + playerName + "</color>"+ ": " + message;

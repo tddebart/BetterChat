@@ -18,8 +18,8 @@ namespace BetterChat.Patches
             }
             if (Input.GetKeyDown(KeyCode.Return) && PhotonNetwork.IsConnected)
             {
-                BetterChat.inputField.Select();
-                BetterChat.inputField.ActivateInputField();
+                // BetterChat.inputField.Select();
+                // BetterChat.inputField.ActivateInputField();
                 BetterChat.inputField.OnSelect(new BaseEventData(EventSystem.current));
                 if (!BetterChat.clearMessageOnEnter.Value)
                 {

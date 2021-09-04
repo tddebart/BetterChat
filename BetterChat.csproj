@@ -104,6 +104,8 @@
     </ItemGroup>
     <ItemGroup>
       <Content Include=".gitignore" />
+      <Content Include="README.md" />
+      <Content Include="ThunderStore\manifest.json" />
       <EmbeddedResource Include="AssetsEmbedded\chatbundle" />
       <Content Include="publish.ps1" />
     </ItemGroup>
