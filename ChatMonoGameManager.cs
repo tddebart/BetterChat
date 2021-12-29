@@ -11,9 +11,9 @@ namespace BetterChat
         public static bool firstTime = true;
         
         [PunRPC]
-        public void RPCA_CreateMessage(string playerName, int teamID, string message)
+        public void RPCA_CreateMessage(string playerName, int colorID, string message)
         {
-            CreateLocalMessage(playerName,teamID,message);
+            CreateLocalMessage(playerName,colorID,message);
             if (ChatMonoGameManager.firstTime)
             {
                 BetterChat.instance.ShowChat();
@@ -26,11 +26,11 @@ namespace BetterChat
             }
         }
 
-        public void CreateLocalMessage(string playerName, int teamID, string message, string objName = "")
+        public void CreateLocalMessage(string playerName, int colorID, string message, string objName = "")
         {
             var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentTrans);
             if (objName != "") messObj.name = objName;
-            var color = GetPlayerColor(teamID);
+            var color = GetPlayerColor(colorID);
             var UGUI = messObj.GetComponent<TextMeshProUGUI>();
             UGUI.text = "<color=" + color + ">" + playerName + "</color>"+ ": " + message;
             UGUI.alignment = BetterChat.textOnRightSide.Value
@@ -54,9 +54,9 @@ namespace BetterChat
             player.transform.Find("WobbleObjects/Typing indicator(Clone)").gameObject.SetActive(false);
         }
 
-        public static string GetPlayerColor(int teamID)
+        public static string GetPlayerColor(int colorID)
         {
-            return teamID != -1 ? "#" + ColorUtility.ToHtmlStringRGB(PlayerSkinBank.GetPlayerSkinColors(teamID).color) : "white";
+            return colorID != -1 ? "#" + ColorUtility.ToHtmlStringRGB(PlayerSkinBank.GetPlayerSkinColors(colorID).color) : "white";
         }
     }
 }

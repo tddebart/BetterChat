@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Utils;
 using Photon.Pun;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using TMPro;
 using UnboundLib;
+using UnboundLib.Extensions;
 using UnboundLib.Utils;
 using UnboundLib.Utils.UI;
 using UnityEngine;
@@ -155,13 +156,13 @@ namespace BetterChat
                             localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
                         }
 
-                        var teamID = localPlayer != null ? localPlayer.teamID : -1;
+                        var colorID = localPlayer != null ? localPlayer.colorID() : -1;
 
                         var localNickName = PhotonNetwork.LocalPlayer.NickName;
                         if (String.IsNullOrWhiteSpace(localNickName)) localNickName = "Player1";
                         
                         // Create the message
-                        MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, localNickName, teamID, text);
+                        MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, localNickName, colorID, text);
                         currentPastIndex = 0;
                         pastMessages.Insert(0, text);
                     }
