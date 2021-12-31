@@ -8,8 +8,7 @@ namespace BetterChat.Patches
     {
         static bool Prefix()
         {
-            if (BetterChat.isLockingInput) { return false; }
-            else { return true; }
+            return !BetterChat.isLockingInput;
         }
     }
 }

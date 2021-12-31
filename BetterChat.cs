@@ -25,7 +25,7 @@ namespace BetterChat
     {
         private const string ModId = "com.bosssloth.rounds.BetterChat";
         private const string ModName = "BetterChat";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.2";
 
         internal static AssetBundle chatAsset;
 
@@ -56,92 +56,44 @@ namespace BetterChat
 
         public static int Width
         {
-            get
-            {
-                return PlayerPrefs.GetInt(GetConfigKey("width"), 550);
-            }
-            set
-            {
-                PlayerPrefs.SetInt(GetConfigKey("width"), value);
-            }
+            get => PlayerPrefs.GetInt(GetConfigKey("width"), 550);
+            set => PlayerPrefs.SetInt(GetConfigKey("width"), value);
         }
         public static int Height
         {
-            get
-            {
-                return PlayerPrefs.GetInt(GetConfigKey("height"), 400);
-            }
-            set
-            {
-                PlayerPrefs.SetInt(GetConfigKey("height"), value);
-            }
+            get => PlayerPrefs.GetInt(GetConfigKey("height"), 400);
+            set => PlayerPrefs.SetInt(GetConfigKey("height"), value);
         }
         public static int XLoc
         {
-            get
-            {
-                return PlayerPrefs.GetInt(GetConfigKey("xLoc"), 25);
-            }
-            set
-            {
-                PlayerPrefs.SetInt(GetConfigKey("xLoc"), value);
-            }
+            get => PlayerPrefs.GetInt(GetConfigKey("xLoc"), 25);
+            set => PlayerPrefs.SetInt(GetConfigKey("xLoc"), value);
         }
         public static int YLoc
         {
-            get
-            {
-                return PlayerPrefs.GetInt(GetConfigKey("yLoc"), 25);
-            }
-            set
-            {
-                PlayerPrefs.SetInt(GetConfigKey("yLoc"), value);
-            }
+            get => PlayerPrefs.GetInt(GetConfigKey("yLoc"), 25);
+            set => PlayerPrefs.SetInt(GetConfigKey("yLoc"), value);
         }
 
         public static bool TextOnRightSide
         {
-            get
-            {
-                return PlayerPrefs.GetInt(GetConfigKey("textOnRightSide"), 1) == 1;
-            }
-            set
-            {
-                PlayerPrefs.SetInt(GetConfigKey("textOnRightSide"), value ? 1 : 0);
-            }
+            get => PlayerPrefs.GetInt(GetConfigKey("textOnRightSide"), 1) == 1;
+            set => PlayerPrefs.SetInt(GetConfigKey("textOnRightSide"), value ? 1 : 0);
         }
         public static float TimeBeforeTextGone
         {
-            get
-            {
-                return PlayerPrefs.GetFloat(GetConfigKey("timeBeforeTextGone"), 6.5f);
-            }
-            set
-            {
-                PlayerPrefs.SetFloat(GetConfigKey("timeBeforeTextGone"), value);
-            }
+            get => PlayerPrefs.GetFloat(GetConfigKey("timeBeforeTextGone"), 6.5f);
+            set => PlayerPrefs.SetFloat(GetConfigKey("timeBeforeTextGone"), value);
         }
         public static bool ClearMessageOnEnter
         {
-            get
-            {
-                return PlayerPrefs.GetInt(GetConfigKey("clearMessageOnEnter"), 1) == 1;
-            }
-            set
-            {
-                PlayerPrefs.SetInt(GetConfigKey("clearMessageOnEnter"), value ? 1 : 0);
-            }
+            get => PlayerPrefs.GetInt(GetConfigKey("clearMessageOnEnter"), 1) == 1;
+            set => PlayerPrefs.SetInt(GetConfigKey("clearMessageOnEnter"), value ? 1 : 0);
         }
         public static float BackgroundOpacity
         {
-            get
-            {
-                return PlayerPrefs.GetFloat(GetConfigKey("backgroundOpacity"), 70f);
-            }
-            set
-            {
-                PlayerPrefs.SetFloat(GetConfigKey("backgroundOpacity"), value);
-            }
+            get => PlayerPrefs.GetFloat(GetConfigKey("backgroundOpacity"), 70f);
+            set => PlayerPrefs.SetFloat(GetConfigKey("backgroundOpacity"), value);
         }
 
         public static readonly List<string> pastMessages = new List<string>();

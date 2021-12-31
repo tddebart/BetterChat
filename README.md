@@ -16,6 +16,7 @@ A new and improved reworked chat
 - Use up and down arrow to scroll through chat history
 - If you want to open the vanilla chat windows use `left-shift` + `Enter`
 - This mod can fully be used clientside
+- Global saving of the config
   
 ### Known issues
 
