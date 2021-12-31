@@ -33,7 +33,7 @@ namespace BetterChat
             var color = GetPlayerColor(colorID);
             var UGUI = messObj.GetComponent<TextMeshProUGUI>();
             UGUI.text = "<color=" + color + ">" + playerName + "</color>"+ ": " + message;
-            UGUI.alignment = BetterChat.textOnRightSide.Value
+            UGUI.alignment = BetterChat.TextOnRightSide
                 ? TextAlignmentOptions.MidlineRight
                 : TextAlignmentOptions.MidlineLeft;
             messObj.AddComponent<MessageMono>();

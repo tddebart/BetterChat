@@ -23,7 +23,7 @@ namespace BetterChat
 
         private void Update()
         {
-            if (timeSinceAwake > BetterChat.timeBeforeTextGone.Value)
+            if (timeSinceAwake > BetterChat.TimeBeforeTextGone)
             {
                 hideWhenChatHidden = true;
                 BetterChat.messageObjs.Remove(gameObject);

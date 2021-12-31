@@ -23,7 +23,7 @@ namespace BetterChat.Patches
                 // BetterChat.inputField.Select();
                 // BetterChat.inputField.ActivateInputField();
                 BetterChat.inputField.OnSelect(new BaseEventData(EventSystem.current));
-                if (!BetterChat.clearMessageOnEnter.Value)
+                if (!BetterChat.ClearMessageOnEnter)
                 {
                     BetterChat.inputField.selectionAnchorPosition = 0;
                     BetterChat.inputField.selectionFocusPosition = BetterChat.inputField.text.Length;

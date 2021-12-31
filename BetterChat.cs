@@ -26,21 +26,21 @@ namespace BetterChat
         private const string ModId = "com.bosssloth.rounds.BetterChat";
         private const string ModName = "BetterChat";
         public const string Version = "1.0.0";
-        
+
         internal static AssetBundle chatAsset;
 
         public static GameObject chatCanvas;
-        
+
         public static GameObject chatMessageObj;
         public static GameObject typingIndicatorObj;
-        
+
         public static Transform chatContentTrans;
 
         public static Image contentPanel;
         public static Image mainPanelImg;
 
         public RectTransform mainPanel;
-        
+
         public static TMP_InputField inputField;
 
         private TimeSince timeSinceTyped = 10;
@@ -54,21 +54,100 @@ namespace BetterChat
 
         public static BetterChat instance;
 
-        public static ConfigEntry<int> width;
-        public static ConfigEntry<int> height;
+        public static int Width
+        {
+            get
+            {
+                return PlayerPrefs.GetInt(GetConfigKey("width"), 550);
+            }
+            set
+            {
+                PlayerPrefs.SetInt(GetConfigKey("width"), value);
+            }
+        }
+        public static int Height
+        {
+            get
+            {
+                return PlayerPrefs.GetInt(GetConfigKey("height"), 400);
+            }
+            set
+            {
+                PlayerPrefs.SetInt(GetConfigKey("height"), value);
+            }
+        }
+        public static int XLoc
+        {
+            get
+            {
+                return PlayerPrefs.GetInt(GetConfigKey("xLoc"), 25);
+            }
+            set
+            {
+                PlayerPrefs.SetInt(GetConfigKey("xLoc"), value);
+            }
+        }
+        public static int YLoc
+        {
+            get
+            {
+                return PlayerPrefs.GetInt(GetConfigKey("yLoc"), 25);
+            }
+            set
+            {
+                PlayerPrefs.SetInt(GetConfigKey("yLoc"), value);
+            }
+        }
 
-        public static ConfigEntry<int> xLoc;
-        public static ConfigEntry<int> yLoc;
-
-        public static ConfigEntry<bool> textOnRightSide;
-
-        public static ConfigEntry<float> timeBeforeTextGone;
-        public static ConfigEntry<bool> clearMessageOnEnter;
-
-        public static ConfigEntry<float> backgroundOpacity; 
+        public static bool TextOnRightSide
+        {
+            get
+            {
+                return PlayerPrefs.GetInt(GetConfigKey("textOnRightSide"), 1) == 1;
+            }
+            set
+            {
+                PlayerPrefs.SetInt(GetConfigKey("textOnRightSide"), value ? 1 : 0);
+            }
+        }
+        public static float TimeBeforeTextGone
+        {
+            get
+            {
+                return PlayerPrefs.GetFloat(GetConfigKey("timeBeforeTextGone"), 6.5f);
+            }
+            set
+            {
+                PlayerPrefs.SetFloat(GetConfigKey("timeBeforeTextGone"), value);
+            }
+        }
+        public static bool ClearMessageOnEnter
+        {
+            get
+            {
+                return PlayerPrefs.GetInt(GetConfigKey("clearMessageOnEnter"), 1) == 1;
+            }
+            set
+            {
+                PlayerPrefs.SetInt(GetConfigKey("clearMessageOnEnter"), value ? 1 : 0);
+            }
+        }
+        public static float BackgroundOpacity
+        {
+            get
+            {
+                return PlayerPrefs.GetFloat(GetConfigKey("backgroundOpacity"), 70f);
+            }
+            set
+            {
+                PlayerPrefs.SetFloat(GetConfigKey("backgroundOpacity"), value);
+            }
+        }
 
         public static readonly List<string> pastMessages = new List<string>();
         public static int currentPastIndex;
+
+        static string GetConfigKey(string key) => $"{BetterChat.ModName}_{key}";
 
         private void Start()
         {
@@ -78,15 +157,6 @@ namespace BetterChat
             harmony.PatchAll();
             
             Unbound.RegisterClientSideMod(ModId);
-
-            width = Config.Bind("BetterChat", "Width", 550);
-            height = Config.Bind("BetterChat", "Height", 400);
-            xLoc = Config.Bind("BetterChat", "x location", 25);
-            yLoc = Config.Bind("BetterChat", "y location", 25);
-            textOnRightSide = Config.Bind("BetterChat", "Text On Right Side", true);
-            timeBeforeTextGone = Config.Bind("BetterChat", "Time Before Text Gone", 6.5f);
-            clearMessageOnEnter = Config.Bind("BetterChat", "Clear Message On Enter", true);
-            backgroundOpacity = Config.Bind("BetterChat", "Background opacity", 70f);
             
             timeSinceTyped = 10;
             
@@ -168,7 +238,7 @@ namespace BetterChat
                     }
                     
                     // Reset things
-                    if (clearMessageOnEnter.Value)
+                    if (ClearMessageOnEnter)
                     {
                         inputField.text = string.Empty;
                         inputField.selectionAnchorPosition = 0;
@@ -205,70 +275,70 @@ namespace BetterChat
 
             MenuHandler.CreateText(" ", menu, out _);
 
-            MenuHandler.CreateSlider("Width", menu, 50, 150, 1000, width.Value, value =>
+            MenuHandler.CreateSlider("Width", menu, 50, 150, 1000, Width, value =>
             {
-                width.Value = (int)value;
+                Width = (int)value;
             }, out var widthSlider, true);
-            MenuHandler.CreateSlider("Height", menu, 50, 150, 1000, height.Value, value =>
+            MenuHandler.CreateSlider("Height", menu, 50, 150, 1000, Height, value =>
             {
-                height.Value = (int)value;
+                Height = (int)value;
             }, out var heightSlider, true);
             
-            MenuHandler.CreateSlider("X location", menu, 50, 0, 1750, xLoc.Value, value =>
+            MenuHandler.CreateSlider("X location", menu, 50, 0, 1750, XLoc, value =>
             {
-                xLoc.Value = (int)value;
+                XLoc = (int)value;
             }, out var xSlider, true);
-            MenuHandler.CreateSlider("Y location", menu, 50, 0, 950, yLoc.Value, value =>
+            MenuHandler.CreateSlider("Y location", menu, 50, 0, 950, YLoc, value =>
             {
-                yLoc.Value = (int)value;
+                YLoc = (int)value;
             }, out var ySlider, true);
 
-            var toggle = MenuHandler.CreateToggle(textOnRightSide.Value, "Text on right side", menu, value =>
+            var toggle = MenuHandler.CreateToggle(TextOnRightSide, "Text on right side", menu, value =>
             {
-                textOnRightSide.Value = value;
+                TextOnRightSide = value;
                 foreach (var chat in chatContentTrans.GetComponentsInChildren<MessageMono>())
                 {
-                    chat.GetComponent<TextMeshProUGUI>().alignment = textOnRightSide.Value
+                    chat.GetComponent<TextMeshProUGUI>().alignment = TextOnRightSide
                         ? TextAlignmentOptions.MidlineRight
                         : TextAlignmentOptions.MidlineLeft;
                 }
             }, 50);
             
-            MenuHandler.CreateSlider("Seconds before message disappears", menu, 50, 1, 15, timeBeforeTextGone.Value, value =>
+            MenuHandler.CreateSlider("Seconds before message disappears", menu, 50, 1, 15, TimeBeforeTextGone, value =>
             {
-                timeBeforeTextGone.Value = value;
+                TimeBeforeTextGone = value;
             }, out var secondsSlider);
             
-            var toggle2 = MenuHandler.CreateToggle(clearMessageOnEnter.Value, "Clear message on enter", menu, value =>
+            var toggle2 = MenuHandler.CreateToggle(ClearMessageOnEnter, "Clear message on enter", menu, value =>
             {
-                clearMessageOnEnter.Value = value;
+                ClearMessageOnEnter = value;
             }, 50);
             
-            MenuHandler.CreateSlider("Background opacity", menu, 50, 0, 100, backgroundOpacity.Value, value =>
+            MenuHandler.CreateSlider("Background opacity", menu, 50, 0, 100, BackgroundOpacity, value =>
             {
-                backgroundOpacity.Value = value;
+                BackgroundOpacity = value;
             }, out var opacitySlider, true);
             
             
             MenuHandler.CreateButton("Reset all", menu, () =>
             {
-                width.Value = 550;
-                height.Value = 400;
-                xLoc.Value = 25;
-                yLoc.Value = 25;
-                textOnRightSide.Value = true;
-                timeBeforeTextGone.Value = 6.5f;
-                clearMessageOnEnter.Value = true;
-                backgroundOpacity.Value = 70f;
+                Width = 550;
+                Height = 400;
+                XLoc = 25;
+                YLoc = 25;
+                TextOnRightSide = true;
+                TimeBeforeTextGone = 6.5f;
+                ClearMessageOnEnter = true;
+                BackgroundOpacity = 70f;
 
-                widthSlider.value = width.Value;
-                heightSlider.value = height.Value;
-                xSlider.value = xLoc.Value;
-                ySlider.value = yLoc.Value;
-                toggle.GetComponent<Toggle>().isOn = textOnRightSide.Value;
-                secondsSlider.value = timeBeforeTextGone.Value;
-                toggle2.GetComponent<Toggle>().isOn = clearMessageOnEnter.Value;
-                opacitySlider.value = backgroundOpacity.Value;
+                widthSlider.value = Width;
+                heightSlider.value = Height;
+                xSlider.value = XLoc;
+                ySlider.value = YLoc;
+                toggle.GetComponent<Toggle>().isOn = TextOnRightSide;
+                secondsSlider.value = TimeBeforeTextGone;
+                toggle2.GetComponent<Toggle>().isOn = ClearMessageOnEnter;
+                opacitySlider.value = BackgroundOpacity;
             }, 40);
             
             // Create back actions
@@ -364,23 +434,23 @@ namespace BetterChat
             }
 
             // Update opacity
-            if (mainPanelImg.color.a != backgroundOpacity.Value / 100f ||
-                contentPanel.color.a != backgroundOpacity.Value / 100f)
+            if (mainPanelImg.color.a != BackgroundOpacity / 100f ||
+                contentPanel.color.a != BackgroundOpacity / 100f)
             {
-                mainPanelImg.SetAlpha(backgroundOpacity.Value / 100f);
-                contentPanel.SetAlpha(backgroundOpacity.Value / 100f);
+                mainPanelImg.SetAlpha(BackgroundOpacity / 100f);
+                contentPanel.SetAlpha(BackgroundOpacity / 100f);
             }
 
             // Update width and height
-            if (mainPanel.sizeDelta.x != width.Value || mainPanel.sizeDelta.y != height.Value)
+            if (mainPanel.sizeDelta.x != Width || mainPanel.sizeDelta.y != Height)
             {
-                mainPanel.sizeDelta = new Vector2(width.Value, height.Value);
+                mainPanel.sizeDelta = new Vector2(Width, Height);
             }
             
             // Update x and y position
-            if (mainPanel.anchoredPosition.x != xLoc.Value || mainPanel.anchoredPosition.y != yLoc.Value)
+            if (mainPanel.anchoredPosition.x != XLoc || mainPanel.anchoredPosition.y != YLoc)
             {
-                mainPanel.anchoredPosition = new Vector2(-xLoc.Value, yLoc.Value);
+                mainPanel.anchoredPosition = new Vector2(-XLoc, YLoc);
             }
             
             
