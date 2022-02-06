@@ -25,7 +25,7 @@ namespace BetterChat
     {
         private const string ModId = "com.bosssloth.rounds.BetterChat";
         private const string ModName = "BetterChat";
-        public const string Version = "1.0.2";
+        public const string Version = "1.0.3";
 
         internal static AssetBundle chatAsset;
 
@@ -131,6 +131,7 @@ namespace BetterChat
             var canvasObj = chatAsset.LoadAsset<GameObject>("ChatCanvas");
             chatCanvas = Instantiate(canvasObj);
             DontDestroyOnLoad(chatCanvas);
+            chatCanvas.AddComponent<CanvasGroup>().blocksRaycasts = false;
 
             chatContentTrans = chatCanvas.transform.Find("Panel/Chats/Viewport/Content");
 

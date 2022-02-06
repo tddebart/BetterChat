@@ -17,6 +17,11 @@ A new and improved reworked chat
 - If you want to open the vanilla chat windows use `left-shift` + `Enter`
 - This mod can fully be used clientside
 - Global saving of the config
+
+## Patch notes
+
+- v1.0.3
+    - fixed the chat blocking the mouse raycast even when closed
   
 ### Known issues
 
