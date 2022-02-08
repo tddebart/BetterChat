@@ -25,7 +25,7 @@ namespace BetterChat
     {
         private const string ModId = "com.bosssloth.rounds.BetterChat";
         private const string ModName = "BetterChat";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.4";
 
         internal static AssetBundle chatAsset;
 
@@ -206,8 +206,15 @@ namespace BetterChat
             });
             inputField.onSelect.AddListener(text =>
             {
-                isLockingInput = true;
-                ShowChat();
+                if (GameObject.Find("UniverseLibCanvas") && GameObject.Find("UniverseLibCanvas").transform.GetChild(1).gameObject.activeInHierarchy)
+                {
+                    
+                }
+                else
+                {
+                    isLockingInput = true;
+                    ShowChat();
+                }
             });
             inputField.onDeselect.AddListener(text =>
             {

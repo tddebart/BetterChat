@@ -20,6 +20,8 @@ A new and improved reworked chat
 
 ## Patch notes
 
+- v1.0.4
+    - fixed UnityExplorer soft locking the game
 - v1.0.3
     - fixed the chat blocking the mouse raycast even when closed
   
