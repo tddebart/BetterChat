@@ -1,33 +1,25 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using Photon.Pun;
-using UnboundLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+// ReSharper disable UnusedMember.Local
 namespace BetterChat.Patches
 {
     [HarmonyPatch(typeof(DevConsole),"Update")]
     class Patch_Update_dev
     {
-        // ReSharper disable once UnusedMember.Local
         private static bool Prefix()
         {
             if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Return))
             {
                 return true;
             }
-            if (Input.GetKeyDown(KeyCode.Return) && PhotonNetwork.IsConnected)
+            if (Input.GetKeyDown(KeyCode.Return) && PhotonNetwork.IsConnected && BetterChat.chatHidden)
             {
-                // BetterChat.inputField.Select();
-                // BetterChat.inputField.ActivateInputField();
-                BetterChat.inputField.OnSelect(new BaseEventData(EventSystem.current));
-                if (!BetterChat.ClearMessageOnEnter)
-                {
-                    BetterChat.inputField.selectionAnchorPosition = 0;
-                    BetterChat.inputField.selectionFocusPosition = BetterChat.inputField.text.Length;
-                }
+                BetterChat.OpenChatForGroup(new KeyValuePair<string, BetterChat.GroupSettings>("ALL", BetterChat.chatContentDict["ALL"]));
             }
 
             return false;
@@ -71,7 +63,7 @@ namespace BetterChat.Patches
             
             var player = PhotonNetwork.GetPhotonView(playerViewID);
             if (player.IsMine) return false;
-            MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, player.Owner.NickName, player.GetComponent<Player>().teamID, message);
+            MenuControllerHandler.instance.GetComponent<PhotonView>().RPC(nameof(ChatMonoGameManager.Instance.RPCA_CreateMessage), RpcTarget.All,player.Owner.NickName, player.GetComponent<Player>().teamID, message, "ALL", player.GetComponent<Player>().playerID);
             return false;
         }
     }

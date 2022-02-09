@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿using System.Linq;
+using HarmonyLib;
+using JetBrains.Annotations;
 using Photon.Pun;
 using TMPro;
 using UnboundLib;
@@ -9,26 +11,39 @@ namespace BetterChat
     public class ChatMonoGameManager : MonoBehaviour
     {
         public static bool firstTime = true;
-        
-        [PunRPC]
-        public void RPCA_CreateMessage(string playerName, int colorID, string message)
-        {
-            CreateLocalMessage(playerName,colorID,message);
-            if (ChatMonoGameManager.firstTime)
-            {
-                BetterChat.instance.ShowChat();
-                this.ExecuteAfterFrames(1, () =>
-                {
-                    BetterChat.instance.HideChat();
-                });
+        public static ChatMonoGameManager Instance;
 
-                firstTime = false;
+        public void Awake()
+        {
+            Instance = this;   
+        }
+
+        [PunRPC]
+        public void RPCA_CreateMessage(string playerName, int colorID, string message, string groupName, int senderPlayerID)
+        {
+            var localPlayer = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
+            if (BetterChat.chatContentDict[groupName].ReceiveMessageCondition(senderPlayerID, localPlayer != null ? localPlayer.playerID : 0))
+            {
+                CreateLocalMessage($"({groupName}) " + playerName,colorID,message,groupName);
+                if (ChatMonoGameManager.firstTime)
+                {
+                    BetterChat.instance.ShowChat();
+                    this.ExecuteAfterFrames(1, () =>
+                    {
+                        BetterChat.instance.HideChat();
+                    });
+
+                    firstTime = false;
+                }
             }
         }
 
-        public void CreateLocalMessage(string playerName, int colorID, string message, string objName = "")
+        public void CreateLocalMessage(string playerName, int colorID, string message,string groupName = null, string objName = "")
         {
-            var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentTrans);
+            if(groupName == null)
+                groupName = "ALL";
+            
+            var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentDict[groupName].content);
             if (objName != "") messObj.name = objName;
             var color = GetPlayerColor(colorID);
             var UGUI = messObj.GetComponent<TextMeshProUGUI>();

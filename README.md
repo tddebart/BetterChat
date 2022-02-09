@@ -19,6 +19,8 @@ A new and improved reworked chat
 - Global saving of the config
 
 ## Patch notes
+- v1.1.0
+  - Added chat groups and chat groups interface
 
 - v1.0.4
     - fixed UnityExplorer soft locking the game
