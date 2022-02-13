@@ -1,4 +1,5 @@
 ﻿using TMPro;
+using UnboundLib;
 using UnboundLib.Utils;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,23 +8,32 @@ namespace BetterChat
 {
     public class MessageMono : MonoBehaviour
     {
-        private TimeSince timeSinceAwake;
+        public TimeSince timeSinceAwake;
         public bool hideWhenChatHidden;
+        public bool shouldDisappearOverTime=  true;
 
         private TextMeshProUGUI uGUI;
         private LayoutElement layout;
 
-        private void Awake()
+        public bool startCalled;
+
+        private void Start()
         {
             timeSinceAwake = 0;
             uGUI = GetComponent<TextMeshProUGUI>();
             layout = GetComponent<LayoutElement>();
             BetterChat.messageObjs.Add(gameObject);
+            BetterChat.instance.ExecuteAfterFrames(1, () =>
+            {
+                startCalled = true;
+            });
         }
 
-        private void Update()
+        public void Update()
         {
-            if (timeSinceAwake > BetterChat.TimeBeforeTextGone)
+            if (!startCalled) return;
+            
+            if (timeSinceAwake > BetterChat.TimeBeforeTextGone || !shouldDisappearOverTime)
             {
                 hideWhenChatHidden = true;
                 BetterChat.messageObjs.Remove(gameObject);
@@ -31,13 +41,13 @@ namespace BetterChat
 
             if (hideWhenChatHidden && BetterChat.chatHidden)
             {
-                uGUI.enabled = false;
                 layout.ignoreLayout = true;
+                uGUI.enabled = false;
             }
             else
             {
-                layout.ignoreLayout = false;
                 uGUI.enabled = true;
+                layout.ignoreLayout = false;
             }
         }
 

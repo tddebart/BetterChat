@@ -25,6 +25,10 @@ namespace BetterChat
             if (BetterChat.chatContentDict[groupName].ReceiveMessageCondition(senderPlayerID, localPlayer != null ? localPlayer.playerID : 0))
             {
                 CreateLocalMessage($"({groupName}) " + playerName,colorID,message,groupName);
+                if (groupName != "ALL")
+                {
+                    CreateLocalMessage($"({groupName}) " + playerName,colorID,message);
+                }
                 if (ChatMonoGameManager.firstTime)
                 {
                     BetterChat.instance.ShowChat();
@@ -51,7 +55,11 @@ namespace BetterChat
             UGUI.alignment = BetterChat.TextOnRightSide
                 ? TextAlignmentOptions.MidlineRight
                 : TextAlignmentOptions.MidlineLeft;
-            messObj.AddComponent<MessageMono>();
+            var mono = messObj.AddComponent<MessageMono>();
+            if (groupName != "ALL")
+            {
+                mono.shouldDisappearOverTime = false;
+            }
         }
 
         [PunRPC]

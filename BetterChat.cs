@@ -217,6 +217,9 @@ namespace BetterChat
                     }
                     chatCanvas.GetComponentInChildren<Scrollbar>(true).value = 0;
                     timeSinceTyped = 10;
+                    
+                    currentGroup = "ALL";
+                    chatContentDict["ALL"].groupButton.onClick.Invoke();
                 });
             });
             inputField.onValueChanged.AddListener(text =>
@@ -330,10 +333,6 @@ namespace BetterChat
         {
             // Background image
             chatCanvas.GetComponentInChildren<Image>(true).enabled = false;
-            // Groups
-            // chatCanvas.transform.Find("Panel/Groups").gameObject.SetActive(false);
-            // Scroll bar
-            // chatCanvas.transform.Find("Panel/Chats/ALL/Scrollbar Vertical").gameObject.SetActive(false);
             // Input field
             chatCanvas.GetComponentInChildren<TMP_InputField>(true).gameObject.SetActive(false);
             // Tabs
@@ -346,10 +345,6 @@ namespace BetterChat
         {
             // Background image
             chatCanvas.GetComponentInChildren<Image>(true).enabled = true;
-            // Groups
-            // chatCanvas.transform.Find("Panel/Groups").gameObject.SetActive(true);
-            // Scroll bar
-            // chatCanvas.transform.Find("Panel/Chats/ALL/Scrollbar Vertical").gameObject.SetActive(true);
             // Input field
             chatCanvas.GetComponentInChildren<TMP_InputField>(true).gameObject.SetActive(true);
             // Tabs
@@ -384,6 +379,10 @@ namespace BetterChat
                 foreach (var value in chatContentDict)
                 {
                     value.Value.ChatObj.SetActive(false);
+                    foreach (Transform chat in value.Value.content.transform)
+                    {
+                        chat.GetComponent<MessageMono>().Update();
+                    }
                     chatCanvas.transform.Find($"Panel/Groups/Scroll View/Viewport/Content/{value.Key}").GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
                 }
                 chatContentDict[groupName].ChatObj.SetActive(true);
@@ -448,11 +447,11 @@ namespace BetterChat
             }
         }
 
-        public static void OpenChatForGroup(KeyValuePair<string, GroupSettings> group)
+        public static void OpenChatForGroup(string key, GroupSettings group)
         {
             isLockingInput = true;
-            currentGroup = group.Key;
-            group.Value.groupButton.onClick.Invoke();
+            currentGroup = key;
+            group.groupButton.onClick.Invoke();
                 
             instance.ShowChat();
                 
@@ -485,7 +484,7 @@ namespace BetterChat
             {
                 if(!PhotonNetwork.IsConnected) break;
                 
-                OpenChatForGroup(group);
+                OpenChatForGroup(group.Key, group.Value);
             }
             
             
