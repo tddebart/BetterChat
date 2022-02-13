@@ -34,7 +34,7 @@ namespace BetterChat
                     }
                 }
 
-                var extra = BetterChat.deadChat && senderPlayer.data.dead ? "*DEAD* " : "";
+                var extra = BetterChat.deadChat && senderPlayer.data.dead ? "<color=red>*DEAD*</color> " : "";
                 CreateLocalMessage($"{extra}({groupName}) " + playerName,colorID,message,groupName);
                 if (groupName != "ALL")
                 {

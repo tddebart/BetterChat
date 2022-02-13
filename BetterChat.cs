@@ -287,7 +287,7 @@ namespace BetterChat
             {
                 BackgroundOpacity = value;
             }, out var opacitySlider, true);
-
+            
             GameObject deadChatToggle = null;
             if (!GameManager.instance.isPlaying)
             {
@@ -391,8 +391,26 @@ namespace BetterChat
                 Destroy(chat.gameObject);
             }
 
+            foreach (var chat in chatContentDict.ToDictionary(obj => obj.Key, obj => obj.Value))
+            {
+                chatContentDict.Remove(chat.Key);
+                Destroy(chat.Value.ChatObj);
+                Destroy(chat.Value.groupButton.gameObject);
+            }
+
             pastMessages.Clear();
             currentPastIndex = 0;
+            
+            CreateGroup("ALL",  new GroupSettings()
+            {
+                ReceiveMessageCondition = (i,j) => true,
+                keyBind = KeyCode.T
+            } );
+            CreateGroup("TEAM",  new GroupSettings()
+            {
+                ReceiveMessageCondition = (i, j) => PlayerManager.instance.GetPlayerById(i)?.teamID == PlayerManager.instance.GetPlayerById(j)?.teamID,
+                keyBind = KeyCode.Y
+            });
         }
         
         
@@ -450,14 +468,14 @@ namespace BetterChat
             /// </param>
             /// <param name="keyBind"></param>
             /// <param name="onGroupButtonClicked"></param>
-            public GroupSettings(Func<int, int, bool> ReceiveMessageCondition =null, KeyCode keyBind = KeyCode.F15, Action onGroupButtonClicked = null)
+            public GroupSettings(Func<int, int, bool> ReceiveMessageCondition =null, KeyCode keyBind = KeyCode.None, Action onGroupButtonClicked = null)
             {
                 this.ReceiveMessageCondition = ReceiveMessageCondition;
                 this.keyBind = keyBind;
                 this.onGroupButtonClicked = onGroupButtonClicked;
             }
             
-            internal GroupSettings(Transform content, GameObject chatObj, Func<int, int, bool> receiveMessageCondition = null, KeyCode keyBind = KeyCode.F15, Action onGroupButtonClicked = null)
+            internal GroupSettings(Transform content, GameObject chatObj, Func<int, int, bool> receiveMessageCondition = null, KeyCode keyBind = KeyCode.None, Action onGroupButtonClicked = null)
             {
                 this.content = content;
                 this.ChatObj = chatObj;
