@@ -11,6 +11,7 @@ using JetBrains.Annotations;
 using TMPro;
 using UnboundLib;
 using UnboundLib.Extensions;
+using UnboundLib.Networking;
 using UnboundLib.Utils;
 using UnboundLib.Utils.UI;
 using UnityEngine;
@@ -99,6 +100,9 @@ namespace BetterChat
             set => PlayerPrefs.SetFloat(GetConfigKey("backgroundOpacity"), value);
         }
 
+        private static ConfigEntry<bool> _deadChat;
+        public static bool deadChat { get; private set; }
+
         public static readonly List<string> pastMessages = new List<string>();
         public static int currentPastIndex;
 
@@ -126,6 +130,10 @@ namespace BetterChat
                 ShowChat();
                 inputField.enabled = false;
             }, MenuBuilder, null, true);
+            
+            _deadChat = Config.Bind("BetterChat", "DeadChat", false , "Enable dead chat");
+            deadChat = _deadChat.Value;
+            Unbound.RegisterHandshake(ModId, OnHandShakeCompleted);
             
             chatAsset = AssetUtils.LoadAssetBundleFromResources("chatbundle", typeof(BetterChat).Assembly);
             if (chatAsset == null)
@@ -279,6 +287,19 @@ namespace BetterChat
             {
                 BackgroundOpacity = value;
             }, out var opacitySlider, true);
+
+            GameObject deadChatToggle = null;
+            if (!GameManager.instance.isPlaying)
+            {
+                deadChatToggle = MenuHandler.CreateToggle(_deadChat.Value, "Enable dead chat", menu, value =>
+                {
+                    if (!GameManager.instance.isPlaying)
+                    {
+                        _deadChat.Value = value;
+                        deadChat = value;
+                    }
+                });
+            }
             
             
             MenuHandler.CreateButton("Reset all", menu, () =>
@@ -291,6 +312,11 @@ namespace BetterChat
                 TimeBeforeTextGone = 6.5f;
                 ClearMessageOnEnter = true;
                 BackgroundOpacity = 70f;
+                if (!GameManager.instance.isPlaying)
+                {
+                    _deadChat.Value = false;
+                    deadChat = false;
+                }
 
                 widthSlider.value = Width;
                 heightSlider.value = Height;
@@ -300,6 +326,10 @@ namespace BetterChat
                 secondsSlider.value = TimeBeforeTextGone;
                 toggle2.GetComponent<Toggle>().isOn = ClearMessageOnEnter;
                 opacitySlider.value = BackgroundOpacity;
+                if (deadChatToggle != null && !GameManager.instance.isPlaying)
+                {
+                    deadChatToggle.GetComponent<Toggle>().isOn = _deadChat.Value;
+                }
             }, 40);
             
             // Create back actions
@@ -461,6 +491,21 @@ namespace BetterChat
                 inputField.selectionAnchorPosition = 0;
                 inputField.selectionFocusPosition = inputField.text.Length;
             }
+        }
+        
+        //DeadChat setting sync
+        internal static void OnHandShakeCompleted()
+        {
+            if (PhotonNetwork.OfflineMode || PhotonNetwork.IsMasterClient)
+            {
+                NetworkingManager.RPC(typeof(BetterChat), nameof(BetterChat.SyncSettings), BetterChat._deadChat.Value);
+            }
+        }
+        
+        [UnboundRPC]
+        public static void SyncSettings(bool _deadChat)
+        {
+            BetterChat.deadChat = _deadChat;
         }
 
         void Update()

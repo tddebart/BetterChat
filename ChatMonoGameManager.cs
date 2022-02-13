@@ -22,12 +22,23 @@ namespace BetterChat
         public void RPCA_CreateMessage(string playerName, int colorID, string message, string groupName, int senderPlayerID)
         {
             var localPlayer = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
+            var senderPlayer = PlayerManager.instance.GetPlayerById(senderPlayerID);
             if (BetterChat.chatContentDict[groupName].ReceiveMessageCondition(senderPlayerID, localPlayer != null ? localPlayer.playerID : 0))
             {
-                CreateLocalMessage($"({groupName}) " + playerName,colorID,message,groupName);
+                if (BetterChat.deadChat)
+                {
+                    if (senderPlayer == null) return;
+                    if (senderPlayer.data.dead && !localPlayer.data.dead)
+                    {
+                        return;
+                    }
+                }
+
+                var extra = BetterChat.deadChat && senderPlayer.data.dead ? "*DEAD* " : "";
+                CreateLocalMessage($"{extra}({groupName}) " + playerName,colorID,message,groupName);
                 if (groupName != "ALL")
                 {
-                    CreateLocalMessage($"({groupName}) " + playerName,colorID,message);
+                    CreateLocalMessage($"{extra}({extra + groupName}) " + playerName,colorID,message);
                 }
                 if (ChatMonoGameManager.firstTime)
                 {
