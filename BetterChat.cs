@@ -526,6 +526,11 @@ namespace BetterChat
             BetterChat.deadChat = _deadChat;
         }
 
+        public static void SetDeadChat(bool value) 
+        {
+            BetterChat.deadChat = value;
+        }
+
         void Update()
         {
             Unbound.lockInputBools["chatLock"] = isLockingInput;
