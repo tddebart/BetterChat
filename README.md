@@ -21,6 +21,7 @@ A new and improved reworked chat
 ## Patch notes
 - v1.1.0
   - Added chat groups and chat groups interface
+  - Dead chat
 
 - v1.0.4
     - fixed UnityExplorer soft locking the game

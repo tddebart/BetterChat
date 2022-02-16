@@ -23,7 +23,7 @@ namespace BetterChat
         {
             var localPlayer = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
             var senderPlayer = PlayerManager.instance.GetPlayerById(senderPlayerID);
-            if (BetterChat.chatContentDict[groupName].ReceiveMessageCondition(senderPlayerID, localPlayer != null ? localPlayer.playerID : 0))
+            if (BetterChat.chatGroupsDict[groupName].receiveMessageCondition(senderPlayerID, localPlayer != null ? localPlayer.playerID : 0))
             {
                 if (BetterChat.deadChat)
                 {
@@ -35,10 +35,13 @@ namespace BetterChat
                 }
 
                 var extra = BetterChat.deadChat && senderPlayer.data.dead ? "<color=red>*DEAD*</color> " : "";
-                CreateLocalMessage($"{extra}({groupName}) " + playerName,colorID,message,groupName);
+
+                CreateLocalMessage(extra, groupName, playerName, colorID,message);
+                // CreateLocalMessage($"{extra}({groupName}) " + playerName,colorID,message,groupName);
                 if (groupName != "ALL")
                 {
-                    CreateLocalMessage($"{extra}({extra + groupName}) " + playerName,colorID,message);
+                    // CreateLocalMessage($"{extra}({extra + groupName}) " + playerName,colorID,message);
+                    CreateLocalMessage(extra,"ALL",playerName,colorID,message,groupName);
                 }
                 if (ChatMonoGameManager.firstTime)
                 {
@@ -53,21 +56,39 @@ namespace BetterChat
             }
         }
 
-        public void CreateLocalMessage(string playerName, int colorID, string message,string groupName = null, string objName = "")
+        public void CreateLocalMessage(string prefix, [CanBeNull] string groupName, string playerName, int colorID, string message, string visualGroupName = "", string objName = "")
         {
             if(groupName == null)
                 groupName = "ALL";
-            
-            var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatContentDict[groupName].content);
+
+            var groupNameBegin = groupName;
+            var messObj = Instantiate(BetterChat.chatMessageObj, BetterChat.chatGroupsDict[groupName].content);
             if (objName != "") messObj.name = objName;
             var color = GetPlayerColor(colorID);
             var UGUI = messObj.GetComponent<TextMeshProUGUI>();
-            UGUI.text = "<color=" + color + ">" + playerName + "</color>"+ ": " + message;
+            if (!string.IsNullOrEmpty(visualGroupName))
+            {
+                groupName = visualGroupName;
+            }
+            
+            if (BetterChat.UsePlayerColors)
+            {
+                playerName = UnboundLib.Utils.ExtraPlayerSkins.GetTeamColorName(colorID);
+            }
+            
+            if (groupName != "")
+            {
+                UGUI.text = $"<color={color}>{prefix}({groupName}) {playerName}</color>: {message}";
+            }
+            else
+            {
+                UGUI.text = $"<color={color}>{prefix} {playerName}</color>: {message}";
+            }
             UGUI.alignment = BetterChat.TextOnRightSide
                 ? TextAlignmentOptions.MidlineRight
                 : TextAlignmentOptions.MidlineLeft;
             var mono = messObj.AddComponent<MessageMono>();
-            if (groupName != "ALL")
+            if (groupNameBegin != "ALL")
             {
                 mono.shouldDisappearOverTime = false;
             }

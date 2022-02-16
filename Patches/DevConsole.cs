@@ -19,7 +19,7 @@ namespace BetterChat.Patches
             }
             if (Input.GetKeyDown(KeyCode.Return) && PhotonNetwork.IsConnected && BetterChat.chatHidden)
             {
-                BetterChat.OpenChatForGroup("ALL", BetterChat.chatContentDict["ALL"]);
+                BetterChat.OpenChatForGroup("ALL", BetterChat.chatGroupsDict["ALL"]);
             }
 
             return false;
