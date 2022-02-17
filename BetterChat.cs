@@ -376,6 +376,7 @@ namespace BetterChat
             chatCanvas.transform.Find("Panel/Groups").gameObject.SetActive(false);
             chatCanvas.GetComponentInChildren<CanvasGroup>().blocksRaycasts = false;
             chatHidden = true;
+            isLockingInput = false;
             timeSinceTyped = 10;
         }
         public void ShowChat()
@@ -576,7 +577,10 @@ namespace BetterChat
             }
             
             OpenChatForGroup("ALL", BetterChat.chatGroupsDict["ALL"]);
-            instance.HideChat();
+            BetterChat.instance.ExecuteAfterFrames(1, () =>
+            {
+                instance.HideChat();
+            });
         }
 
         void Update()

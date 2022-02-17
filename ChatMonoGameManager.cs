@@ -25,16 +25,20 @@ namespace BetterChat
             var senderPlayer = PlayerManager.instance.GetPlayerById(senderPlayerID);
             if (BetterChat.chatGroupsDict[groupName].receiveMessageCondition(senderPlayerID, localPlayer != null ? localPlayer.playerID : 0))
             {
-                if (BetterChat.deadChat)
+                var extra = "";
+                if (senderPlayerID != -1)
                 {
-                    if (senderPlayer == null) return;
-                    if (senderPlayer.data.dead && !localPlayer.data.dead)
+                    if (BetterChat.deadChat)
                     {
-                        return;
+                        if (senderPlayer == null) return;
+                        if (senderPlayer.data.dead && !localPlayer.data.dead)
+                        {
+                            return;
+                        }
                     }
-                }
 
-                var extra = BetterChat.deadChat && senderPlayer.data.dead ? "<color=red>*DEAD*</color> " : "";
+                    extra = BetterChat.deadChat && senderPlayer.data.dead ? "<color=red>*DEAD*</color> " : "";
+                }
 
                 CreateLocalMessage(extra, groupName, playerName, colorID,message);
                 // CreateLocalMessage($"{extra}({groupName}) " + playerName,colorID,message,groupName);
@@ -56,7 +60,7 @@ namespace BetterChat
             }
         }
 
-        public void CreateLocalMessage(string prefix, [CanBeNull] string groupName, string playerName, int colorID, string message, string visualGroupName = "", string objName = "")
+        public void CreateLocalMessage(string prefix, [CanBeNull] string groupName, string playerName, int colorID, string message, string visualGroupName = null, string objName = "")
         {
             if(groupName == null)
                 groupName = "ALL";
@@ -66,7 +70,7 @@ namespace BetterChat
             if (objName != "") messObj.name = objName;
             var color = GetPlayerColor(colorID);
             var UGUI = messObj.GetComponent<TextMeshProUGUI>();
-            if (!string.IsNullOrEmpty(visualGroupName))
+            if (visualGroupName != null)
             {
                 groupName = visualGroupName;
             }
