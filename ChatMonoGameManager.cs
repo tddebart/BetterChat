@@ -75,7 +75,7 @@ namespace BetterChat
                 groupName = visualGroupName;
             }
             
-            if (BetterChat.UsePlayerColors)
+            if (BetterChat.UsePlayerColors && colorID >= 0)
             {
                 playerName = UnboundLib.Utils.ExtraPlayerSkins.GetTeamColorName(colorID);
             }
