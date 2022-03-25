@@ -426,14 +426,25 @@ namespace BetterChat
         
         public static void CreateGroup(string groupName, GroupSettings groupSettings)
         {
-            var chatObj = Instantiate(chatCanvas.transform.Find("Panel/Chats/object"), chatCanvas.transform.Find("Panel/Chats"));
-            chatObj.name = groupName;
-            
-            var groupObj = Instantiate(chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content/TabObject"), chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content"));
-            groupObj.name = groupName;
+            var chatObj = chatCanvas.transform.Find("Panel/Chats/Chat");
+            if (chatObj is null)
+            {
+                chatObj = Instantiate(chatCanvas.transform.Find("Panel/Chats/object"), chatCanvas.transform.Find("Panel/Chats"));
+                chatObj.name = "Chat";
+            }
+            //chatObj.name = groupName;
+
+            //var groupObj = Instantiate(chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content/TabObject"), chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content"));
+            var groupObj = chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content/Chat");
+            if (groupObj is null)
+            {
+                groupObj = Instantiate(chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content/TabObject"), chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content"));
+                groupObj.name = "Chat";
+            }
             groupObj.GetComponentInChildren<TextMeshProUGUI>().text = groupName.ToUpper();
             groupObj.GetComponent<Button>().onClick.AddListener(() =>
             {
+                /*
                 foreach (var value in chatGroupsDict)
                 {
                     value.Value.ChatObj.SetActive(false);
@@ -441,11 +452,16 @@ namespace BetterChat
                     {
                         chat.GetComponent<MessageMono>().Update();
                     }
-                    chatCanvas.transform.Find($"Panel/Groups/Scroll View/Viewport/Content/{value.Key}").GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                    //chatCanvas.transform.Find($"Panel/Groups/Scroll View/Viewport/Content/{value.Key}").GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                    chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content/Chat").GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
                 }
                 chatGroupsDict[groupName].ChatObj.SetActive(true);
-                chatCanvas.transform.Find($"Panel/Groups/Scroll View/Viewport/Content/{groupName}").GetComponent<Image>().color = new Color(0.8f, 0.8f, 0.8f, 1f);
+                //chatCanvas.transform.Find($"Panel/Groups/Scroll View/Viewport/Content/{groupName}").GetComponent<Image>().color = new Color(0.8f, 0.8f, 0.8f, 1f);
+                chatCanvas.transform.Find("Panel/Groups/Scroll View/Viewport/Content/Chat").GetComponent<Image>().color = new Color(0.8f, 0.8f, 0.8f, 1f);
+                
                 currentGroup = groupName;
+                */
+                chatGroupsDict[groupName].ChatObj.SetActive(true);
                 
 
                 groupSettings.onGroupButtonClicked?.Invoke();
@@ -519,7 +535,8 @@ namespace BetterChat
             isLockingInput = true;
             currentGroup = key;
             group.groupButton.onClick.Invoke();
-                
+            group.groupButton.GetComponentInChildren<TextMeshProUGUI>().text = key.ToUpper();
+
             instance.ShowChat();
                 
             inputField.OnSelect(new BaseEventData(EventSystem.current));
@@ -575,12 +592,14 @@ namespace BetterChat
             {
                 EvaluateCanSeeGroup(group.Key);
             }
-            
+           
+            /*
             OpenChatForGroup("ALL", BetterChat.chatGroupsDict["ALL"]);
             BetterChat.instance.ExecuteAfterFrames(1, () =>
             {
                 instance.HideChat();
             });
+            */
         }
 
         void Update()
@@ -603,7 +622,7 @@ namespace BetterChat
             foreach (var group in chatGroupsDict.Where(group => Input.GetKeyDown(group.Value.keyBind)))
             {
                 var localPlayer = PlayerManager.instance.players.First(p => p.data.view.IsMine);
-                if(!PhotonNetwork.IsConnected || (!group.Value.canSeeGroup?.Invoke(localPlayer.playerID) ?? false)) break;
+                if(!PhotonNetwork.IsConnected || (!group.Value.canSeeGroup?.Invoke(localPlayer.playerID) ?? false)) continue;
                 
                 OpenChatForGroup(group.Key, group.Value);
             }
