@@ -29,7 +29,7 @@ namespace BetterChat
     {
         private const string ModId = "com.bosssloth.rounds.BetterChat";
         private const string ModName = "BetterChat";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.2";
 
         internal static AssetBundle chatAsset;
 
@@ -396,14 +396,14 @@ namespace BetterChat
             foreach (var chat in chatGroupsDict.Values.SelectMany(obj => obj.content.GetComponentsInChildren<MessageMono>()))
             {
                 //messageObjs.Remove(chat.gameObject);
-                Destroy(chat.gameObject);
+                //Destroy(chat.gameObject);
             }
 
             foreach (var chat in chatGroupsDict.ToDictionary(obj => obj.Key, obj => obj.Value))
             {
                 chatGroupsDict.Remove(chat.Key);
-                Destroy(chat.Value.ChatObj);
-                Destroy(chat.Value.groupButton.gameObject);
+                //Destroy(chat.Value.ChatObj);
+                //Destroy(chat.Value.groupButton.gameObject);
             }
 
             pastMessages.Clear();
