@@ -40,13 +40,13 @@ namespace BetterChat
                     extra = BetterChat.deadChat && senderPlayer.data.dead ? "<color=red>*DEAD*</color> " : "";
                 }
 
-                CreateLocalMessage(extra, groupName, playerName, colorID,message);
+                //CreateLocalMessage(extra, groupName, playerName, colorID,message);
                 // CreateLocalMessage($"{extra}({groupName}) " + playerName,colorID,message,groupName);
-                if (groupName != "ALL")
-                {
+                //if (groupName != "ALL")
+                //{
                     // CreateLocalMessage($"{extra}({extra + groupName}) " + playerName,colorID,message);
                     CreateLocalMessage(extra,"ALL",playerName,colorID,message,groupName);
-                }
+                //}
                 if (ChatMonoGameManager.firstTime)
                 {
                     BetterChat.instance.ShowChat();
