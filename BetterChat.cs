@@ -29,7 +29,7 @@ namespace BetterChat
     {
         private const string ModId = "com.bosssloth.rounds.BetterChat";
         private const string ModName = "BetterChat";
-        public const string Version = "1.1.2";
+        public const string Version = "1.1.3";
 
         internal static AssetBundle chatAsset;
 
@@ -109,6 +109,7 @@ namespace BetterChat
 
         public static readonly List<string> pastMessages = new List<string>();
         public static int currentPastIndex;
+        public static bool allowOpeningChat = true;
 
         static string GetConfigKey(string key) => $"{BetterChat.ModName}_{key}";
 
@@ -619,15 +620,20 @@ namespace BetterChat
             }
             
             // Check for all group keybinds
-            foreach (var group in chatGroupsDict.Where(group => Input.GetKeyDown(group.Value.keyBind)))
+            if (allowOpeningChat)
             {
-                var localPlayer = PlayerManager.instance.players.First(p => p.data.view.IsMine);
-                if(!PhotonNetwork.IsConnected || (!group.Value.canSeeGroup?.Invoke(localPlayer.playerID) ?? false)) continue;
-                
-                OpenChatForGroup(group.Key, group.Value);
+                foreach (var group in chatGroupsDict.Where(group => Input.GetKeyDown(group.Value.keyBind)))
+                {
+                    var localPlayer = PlayerManager.instance.GetLocalPlayer();
+                    if (localPlayer == null) continue;
+                    if (!PhotonNetwork.IsConnected ||
+                        (!group.Value.canSeeGroup?.Invoke(localPlayer.playerID) ?? false)) continue;
+
+                    OpenChatForGroup(group.Key, group.Value);
+                }
             }
-            
-            
+
+
             // Enable and disable background for singular messages
             if (messageObjs.Count > 0 && chatHidden)
             {
@@ -673,7 +679,7 @@ namespace BetterChat
             {
                 if (PlayerManager.instance.players.Count != 0)
                 {
-                    var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
+                    var localPlayer = PlayerManager.instance.GetLocalPlayer();
                     if (localPlayer == null) return;
                     var localViewID = localPlayer.data.view.ViewID;
                     MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_ActivateIndicator", RpcTarget.All, localViewID);
@@ -684,7 +690,8 @@ namespace BetterChat
             {
                 if (PlayerManager.instance.players.Count != 0)
                 {
-                    var localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
+                    var localPlayer = PlayerManager.instance.GetLocalPlayer();
+                    if (localPlayer == null) return;
                     var localViewID = localPlayer.data.view.ViewID;
                     MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_DeActivateIndicator", RpcTarget.All, localViewID);
                     indicatorOn = false;
