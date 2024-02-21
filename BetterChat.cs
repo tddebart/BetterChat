@@ -125,7 +125,7 @@ namespace BetterChat
         }
         private void Start()
         {
-            
+
             Unbound.RegisterClientSideMod(ModId);
 
             timeSinceTyped = 10;
