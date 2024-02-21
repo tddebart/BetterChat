@@ -19,6 +19,7 @@ using UnboundLib.Utils.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Net.NetworkInformation;
 
 namespace BetterChat
 {
@@ -114,32 +115,35 @@ namespace BetterChat
         static string GetConfigKey(string key) => $"{BetterChat.ModName}_{key}";
 
         //https://www.google.com/search?q=gmod+team+chat&client=firefox-b-d&channel=trow5&sxsrf=APq-WBs8EAcLAb1DOJ0jnNGA815yBMa3TQ:1644414874749&source=lnms&tbm=isch&sa=X&ved=2ahUKEwifpePj4vL1AhVhlP0HHRO4CJ8Q_AUoAnoECAEQBA&biw=2261&bih=1147&dpr=1.13#imgrc=SABTW78NhYAg1M
-        
-        private void Start()
+
+        private void Awake()
         {
-            instance = this;
-            
             var harmony = new Harmony(ModId);
             harmony.PatchAll();
-            
+
+            instance = this;
+        }
+        private void Start()
+        {
+
             Unbound.RegisterClientSideMod(ModId);
-            
+
             timeSinceTyped = 10;
-            
+
             Unbound.RegisterMenu("Better chat", () =>
             {
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("","ALL", "Player1", 0, "Lorem ipsum dolor sit amet,", "","Remove");
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("","ALL","Player2", 1, "consectetur adipiscing elit,", "","Remove");
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("","ALL","Player3", 2, "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", "","Remove");
-                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("","ALL","Player4", 3, "Ut enim ad minim veniam", "","Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("", "ALL", "Player1", 0, "Lorem ipsum dolor sit amet,", "", "Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("", "ALL", "Player2", 1, "consectetur adipiscing elit,", "", "Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("", "ALL", "Player3", 2, "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", "", "Remove");
+                MenuControllerHandler.instance.GetComponent<ChatMonoGameManager>().CreateLocalMessage("", "ALL", "Player4", 3, "Ut enim ad minim veniam", "", "Remove");
                 ShowChat();
                 inputField.enabled = false;
             }, MenuBuilder, null, true);
-            
-            _deadChat = Config.Bind("BetterChat", "DeadChat", false , "Enable dead chat");
+
+            _deadChat = Config.Bind("BetterChat", "DeadChat", false, "Enable dead chat");
             deadChat = _deadChat.Value;
             Unbound.RegisterHandshake(ModId, OnHandShakeCompleted);
-            
+
             chatAsset = AssetUtils.LoadAssetBundleFromResources("chatbundle", typeof(BetterChat).Assembly);
             if (chatAsset == null)
             {
@@ -153,12 +157,12 @@ namespace BetterChat
 
             // chatContentTrans = chatCanvas.transform.Find("Panel/Chats/ALL/Viewport/Content");
             // chatContentDict.Add("ALL", chatCanvas.transform.Find("Panel/Chats/ALL/Viewport/Content"));
-            CreateGroup("ALL",  new GroupSettings()
+            CreateGroup("ALL", new GroupSettings()
             {
-                receiveMessageCondition = (i,j) => true,
+                receiveMessageCondition = (i, j) => true,
                 keyBind = KeyCode.T
-            } );
-            CreateGroup("TEAM",  new GroupSettings()
+            });
+            CreateGroup("TEAM", new GroupSettings()
             {
                 receiveMessageCondition = (i, j) => PlayerManager.instance.GetPlayerById(i)?.teamID == PlayerManager.instance.GetPlayerById(j)?.teamID,
                 keyBind = KeyCode.Y,
@@ -170,16 +174,6 @@ namespace BetterChat
             mainPanel = chatCanvas.transform.Find("Panel").gameObject.GetComponent<RectTransform>();
             mainPanelImg = mainPanel.GetComponent<Image>();
 
-            On.MainMenuHandler.Awake += (orig, self) =>
-            {
-                this.ExecuteAfterSeconds(0.2f, () =>
-                {
-                    HideChat();
-                    ResetChat();
-                });
-                
-                orig(self);
-            };
 
             inputField = chatCanvas.transform.Find("Panel/Input").GetComponent<TMP_InputField>();
             inputField.onEndEdit.AddListener(text =>
@@ -193,7 +187,7 @@ namespace BetterChat
                     //inputField.ReleaseSelection();
                     inputField.OnDeselect(new BaseEventData(EventSystem.current));
                     HideChat();
-                    
+
                     // don't send text if it isn't anything
                     if (string.IsNullOrWhiteSpace(text)) return;
 
@@ -203,7 +197,7 @@ namespace BetterChat
                         // Send text to vanilla system so people without the mod can still see
                         if (PlayerManager.instance.players.Count != 0)
                         {
-                            typeof(DevConsole).InvokeMember("Send", BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.NonPublic, null, MenuControllerHandler.instance.GetComponent<DevConsole>(), new object[]{text});
+                            typeof(DevConsole).InvokeMember("Send", BindingFlags.Instance | BindingFlags.InvokeMethod | BindingFlags.NonPublic, null, MenuControllerHandler.instance.GetComponent<DevConsole>(), new object[] { text });
                             localPlayer = PlayerManager.instance.players.First(pl => pl.GetComponent<PhotonView>().IsMine);
                         }
 
@@ -211,13 +205,13 @@ namespace BetterChat
 
                         var localNickName = PhotonNetwork.LocalPlayer.NickName;
                         if (String.IsNullOrWhiteSpace(localNickName)) localNickName = "Player1";
-                        
+
                         // Create the message
-                        MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, localNickName, colorID, text,currentGroup, localPlayer != null ? localPlayer.playerID : 0);
+                        MenuControllerHandler.instance.GetComponent<PhotonView>().RPC("RPCA_CreateMessage", RpcTarget.All, localNickName, colorID, text, currentGroup, localPlayer != null ? localPlayer.playerID : 0);
                         currentPastIndex = 0;
                         pastMessages.Insert(0, text);
                     }
-                    
+
                     // Reset things
                     if (ClearMessageOnEnter)
                     {
@@ -230,7 +224,7 @@ namespace BetterChat
                     }
                     chatCanvas.GetComponentInChildren<Scrollbar>(true).value = 0;
                     timeSinceTyped = 10;
-                    
+
                     currentGroup = "ALL";
                     chatGroupsDict["ALL"].groupButton.onClick.Invoke();
                 });
@@ -240,13 +234,17 @@ namespace BetterChat
                 timeSinceTyped = 0;
             });
             HideChat();
-            
-            
+
+
             // Register on game start
             GameModeManager.AddHook(GameModeHooks.HookBattleStart, OnBattleStart);
+            //this.ExecuteAfterSeconds(3f, () =>
+            //{
+            //    MenuControllerHandler.instance.gameObject.AddComponent<ChatMonoGameManager>();
+            //});
         }
 
-        public void MenuBuilder( GameObject menu)
+        public void MenuBuilder(GameObject menu)
         {
             MenuHandler.CreateText("If you want to open the vanilla chat windows press shift + enter", menu, out _, 40);
 
@@ -260,7 +258,7 @@ namespace BetterChat
             {
                 Height = (int)value;
             }, out var heightSlider, true);
-            
+
             MenuHandler.CreateSlider("X location", menu, 50, 0, 1750, XLoc, value =>
             {
                 XLoc = (int)value;
@@ -280,22 +278,22 @@ namespace BetterChat
                         : TextAlignmentOptions.MidlineLeft;
                 }
             }, 50);
-            
+
             MenuHandler.CreateSlider("Seconds before message disappears", menu, 50, 1, 15, TimeBeforeTextGone, value =>
             {
                 TimeBeforeTextGone = value;
             }, out var secondsSlider);
-            
+
             var toggle2 = MenuHandler.CreateToggle(ClearMessageOnEnter, "Clear message on enter", menu, value =>
             {
                 ClearMessageOnEnter = value;
             }, 50);
-            
+
             MenuHandler.CreateSlider("Background opacity", menu, 50, 0, 100, BackgroundOpacity, value =>
             {
                 BackgroundOpacity = value;
             }, out var opacitySlider, true);
-            
+
             GameObject deadChatToggle = null;
             if (!GameManager.instance.isPlaying)
             {
@@ -308,8 +306,8 @@ namespace BetterChat
                     }
                 });
             }
-            
-            
+
+
             MenuHandler.CreateButton("Reset all", menu, () =>
             {
                 Width = 550;
@@ -339,19 +337,19 @@ namespace BetterChat
                     deadChatToggle.GetComponent<Toggle>().isOn = _deadChat.Value;
                 }
             }, 40);
-            
+
             // Create back actions
             menu.GetComponentInChildren<GoBack>(true).goBackEvent.AddListener(() =>
             {
-               HideChat();
-               foreach (Transform obj in chatGroupsDict["ALL"].content)
-               {
-                   if (obj.name == "Remove")
-                   {
-                       Destroy(obj.gameObject);
-                   }
-               }
-               inputField.enabled = true;
+                HideChat();
+                foreach (Transform obj in chatGroupsDict["ALL"].content)
+                {
+                    if (obj.name == "Remove")
+                    {
+                        Destroy(obj.gameObject);
+                    }
+                }
+                inputField.enabled = true;
             });
             menu.transform.Find("Group/Back").gameObject.GetComponent<Button>().onClick.AddListener(() =>
             {
@@ -411,20 +409,20 @@ namespace BetterChat
             currentPastIndex = 0;
 
             UsePlayerColors = false;
-            
-            CreateGroup("ALL",  new GroupSettings()
+
+            CreateGroup("ALL", new GroupSettings()
             {
-                receiveMessageCondition = (i,j) => true,
+                receiveMessageCondition = (i, j) => true,
                 keyBind = KeyCode.T
-            } );
-            CreateGroup("TEAM",  new GroupSettings()
+            });
+            CreateGroup("TEAM", new GroupSettings()
             {
                 receiveMessageCondition = (i, j) => PlayerManager.instance.GetPlayerById(i)?.teamID == PlayerManager.instance.GetPlayerById(j)?.teamID,
                 keyBind = KeyCode.Y
             });
         }
-        
-        
+
+
         public static void CreateGroup(string groupName, GroupSettings groupSettings)
         {
             var chatObj = chatCanvas.transform.Find("Panel/Chats/Chat");
@@ -463,7 +461,7 @@ namespace BetterChat
                 currentGroup = groupName;
                 */
                 chatGroupsDict[groupName].ChatObj.SetActive(true);
-                
+
 
                 groupSettings.onGroupButtonClicked?.Invoke();
             });
@@ -471,8 +469,8 @@ namespace BetterChat
             chatGroupsDict.Add(groupName, new GroupSettings(groupSettings, chatObj.transform.Find("Viewport/Content"), chatObj.transform.Find("Viewport/Content").parent.parent.gameObject, groupObj.GetComponent<Button>()));
             if (groupName == "ALL")
             {
-                instance.ExecuteAfterSeconds(1,() => groupObj.GetComponent<Button>().onClick.Invoke());
-                
+                instance.ExecuteAfterSeconds(1, () => groupObj.GetComponent<Button>().onClick.Invoke());
+
             }
         }
 
@@ -482,7 +480,7 @@ namespace BetterChat
             public KeyCode keyBind;
             public Action onGroupButtonClicked;
             public Func<int, bool> canSeeGroup;
-            
+
             public Transform content;
             public GameObject ChatObj;
             public Button groupButton;
@@ -497,14 +495,14 @@ namespace BetterChat
             /// <param name="keyBind"></param>
             /// <param name="onGroupButtonClicked"></param>
             /// <param name="canSeeGroup"></param>
-            public GroupSettings(Func<int, int, bool> receiveMessageCondition =null, KeyCode keyBind = KeyCode.None, Action onGroupButtonClicked = null, Func<int, bool> canSeeGroup = null)
+            public GroupSettings(Func<int, int, bool> receiveMessageCondition = null, KeyCode keyBind = KeyCode.None, Action onGroupButtonClicked = null, Func<int, bool> canSeeGroup = null)
             {
                 this.receiveMessageCondition = receiveMessageCondition;
                 this.keyBind = keyBind;
                 this.onGroupButtonClicked = onGroupButtonClicked;
                 this.canSeeGroup = canSeeGroup;
             }
-            
+
             internal GroupSettings(Transform content, GameObject chatObj, Func<int, int, bool> receiveMessageCondition = null, KeyCode keyBind = KeyCode.None, Action onGroupButtonClicked = null)
             {
                 this.content = content;
@@ -539,7 +537,7 @@ namespace BetterChat
             group.groupButton.GetComponentInChildren<TextMeshProUGUI>().text = key.ToUpper();
 
             instance.ShowChat();
-                
+
             inputField.OnSelect(new BaseEventData(EventSystem.current));
             if (!ClearMessageOnEnter)
             {
@@ -547,7 +545,7 @@ namespace BetterChat
                 inputField.selectionFocusPosition = inputField.text.Length;
             }
         }
-        
+
         //DeadChat setting sync
         internal static void OnHandShakeCompleted()
         {
@@ -556,14 +554,14 @@ namespace BetterChat
                 NetworkingManager.RPC(typeof(BetterChat), nameof(BetterChat.SyncSettings), BetterChat._deadChat.Value);
             }
         }
-        
+
         [UnboundRPC]
         public static void SyncSettings(bool _deadChat)
         {
             BetterChat.deadChat = _deadChat;
         }
 
-        public static void SetDeadChat(bool value) 
+        public static void SetDeadChat(bool value)
         {
             BetterChat.deadChat = value;
         }
@@ -581,7 +579,8 @@ namespace BetterChat
             if (group.canSeeGroup?.Invoke(localPlayer.playerID) ?? true)
             {
                 group.groupButton.gameObject.SetActive(true);
-            } else
+            }
+            else
             {
                 group.groupButton.gameObject.SetActive(false);
             }
@@ -593,7 +592,7 @@ namespace BetterChat
             {
                 EvaluateCanSeeGroup(group.Key);
             }
-           
+
             /*
             OpenChatForGroup("ALL", BetterChat.chatGroupsDict["ALL"]);
             BetterChat.instance.ExecuteAfterFrames(1, () =>
@@ -606,9 +605,9 @@ namespace BetterChat
         void Update()
         {
             Unbound.lockInputBools["chatLock"] = isLockingInput;
-            
+
             // Arrow message history
-            if (isLockingInput && Input.GetKeyDown(KeyCode.UpArrow) && currentPastIndex != pastMessages.Count-1)
+            if (isLockingInput && Input.GetKeyDown(KeyCode.UpArrow) && currentPastIndex != pastMessages.Count - 1)
             {
                 currentPastIndex++;
                 inputField.text = pastMessages[currentPastIndex];
@@ -618,7 +617,7 @@ namespace BetterChat
                 currentPastIndex--;
                 inputField.text = pastMessages[currentPastIndex];
             }
-            
+
             // Check for all group keybinds
             if (allowOpeningChat)
             {
@@ -667,14 +666,14 @@ namespace BetterChat
             {
                 mainPanel.sizeDelta = new Vector2(Width, Height);
             }
-            
+
             // Update x and y position
             if (mainPanel.anchoredPosition.x != XLoc || mainPanel.anchoredPosition.y != YLoc)
             {
                 mainPanel.anchoredPosition = new Vector2(-XLoc, YLoc);
             }
-            
-            
+
+
             if (isTyping && !indicatorOn)
             {
                 if (PlayerManager.instance.players.Count != 0)
